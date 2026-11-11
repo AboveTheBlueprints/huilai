@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>回来</title>
+<style>
+body { background: #f3ece0; color: #3a3128; font-family: "PingFang SC", "Noto Serif SC", serif; max-width: 640px; margin: 0 auto; padding: 32px 20px 80px; line-height: 1.9; font-size: 17px; }
+h1 { font-weight: normal; font-size: 22px; letter-spacing: 4px; margin: 0 0 24px; }
+.p { margin: 0 0 10px; }
+.head { margin-top: 26px; color: #8a7a66; letter-spacing: 2px; }
+.you { color: #8a7a66; }
+.book { background: #fbf7ee; border-left: 3px solid #c9b48f; padding: 10px 16px; margin: 14px 0; }
+.book div { display: flex; gap: 16px; }
+.book .m { width: 4em; flex: none; color: #8a7a66; }
+.choices { margin: 14px 0 0; }
+.choices button { display: block; width: 100%; text-align: left; background: #fffaf1; border: 1px solid #d7c8ad; border-radius: 6px; padding: 10px 14px; margin: 0 0 8px; font: inherit; color: inherit; cursor: pointer; }
+.choices button:hover { background: #f7ecd6; }
+.again { margin-top: 30px; color: #8a7a66; font-size: 15px; }
+.again a { color: #8a6a3a; cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>回来</h1>
+<div id="out"></div>
+<div id="choices" class="choices"></div>
+<script>
+var ACTS = {
+  '1': '修院里那把散了的藤椅',
+  '2': '陪姥爷在院里坐一下午',
+  '3': '教姥姥用手机跟你视频',
+  '4': '替姥姥把药一格一格分进药盒',
+  '5': '陪姥姥走河边那条远路去买菜'
+};
+var LETTERS = {
+  '1': '我会回来的。',
+  '2': '药按格子吃。',
+  '3': '椅子别扔。',
+  '4': '想我了就打视频。',
+  '5': '（什么也不写）'
+};
+var DAYHINT = {
+  1: '你到的那天下午。姥爷在院门口等你，起身的时候手在门框上撑了一下。',
+  2: '早上姥姥戴着老花镜挑豆子，挑一会儿就摘下来揉揉眼。',
+  3: '下了点小雨。姥爷说他腿里头先知道要下雨。',
+  4: '姥姥给你钉扣子，线穿了三回才穿进针眼。',
+  5: '最后一天。姥爷把你的包往门口拎，拎到一半放下了，说"你自己来"。'
+};
+var MON = ['', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月', '一月', '二月', '三月', '四月'];
+var BG = ['', '槐花落了一院子，他扫了一上午。', '热了。他午觉睡得比以前长。', '下了三天雨，他说腿里头疼。', '热。', '豆角下来了。', '他过生日，吃了半碗面。', '生炉子了。', '冷。夜里他起来两回。', '过年。你妈打电话来，说你忙。', '没什么事。', '她把冬天的被子拆了洗了。', '槐树又要开了。'];
+
+var st = null;
+
+function cnt(k) { var n = 0; for (var i = 0; i < st.picks.length; i++) if (st.picks[i] === k) n++; return n; }
+
+function reply(k) {
+  var n = cnt(k), chair = cnt('1') > 0;
+  if (k === '1') {
+    if (n === 1) return '你把藤椅散了的那几根藤重新编上，拿铁丝在椅子腿上勒了两道。姥爷坐上去晃了晃："能坐。"';
+    return '你又给藤椅腿加了一道铁丝。姥爷说："够结实了，比我结实。"';
+  }
+  if (k === '2') {
+    var seat = chair ? '他坐藤椅，你坐小板凳' : '他坐小板凳，你蹲在他旁边';
+    if (n === 1) return seat + '。他跟你讲以前厂里的事，讲到一半，睡着了。';
+    if (n === 2) return seat + '。这回他没睡，指着院门外那棵槐树说，是你妈小时候种的。';
+    return seat + '。他不怎么说话了，你们俩就坐着。太阳挪过去，他把身子往太阳里挪一挪。';
+  }
+  if (k === '3') {
+    if (n === 1) return '你教姥姥先点那个绿的，再点小摄像头。她点错了两回，第三回通了。你在屋里，她在院里，两个人对着手机笑。';
+    if (n === 2) return '你让她自己从头弄一遍，你不看。她不认字，记的是"第三排第二个"。';
+    return '她已经会了，还自己想出来把手机靠在暖壶上，不用举着。';
+  }
+  if (k === '4') {
+    if (n === 1) return '你把姥爷的降压药、姥姥的钙片，一格一格分进七格的药盒，周一到周日，够一个礼拜。姥姥在边上看着。';
+    return '你又分了一个礼拜的。药盒不够了，拿一个空糖盒子装，盖上写了"第' + n + '个礼拜"。';
+  }
+  if (k === '5') {
+    if (n === 1) return '你陪姥姥走河边那条路去菜市场，比走大路远一倍，她说那边的豆腐好。卖鱼的老冯冲她点了点头。';
+    if (n === 2) return '老冯问："这是你外孙？"她说："是，城里的。"';
+    return '走到桥头她歇了两回。你要扶，她说别扶，扶惯了腿就懒了。';
+  }
+  return '';
+}
+
+function chairBreak(a) { return a === 1 ? 5 : (a === 2 ? 8 : 11); }
+
+function year() {
+  var a = cnt('1'), b = cnt('2'), c = cnt('3'), d = cnt('4'), e = cnt('5'), L = st.letter;
+  var ev = {}; for (var m = 1; m <= 12; m++) ev[m] = [];
+  var cb = a >= 1 ? chairBreak(a) : null;
+  if (L === '1') {
+    ev[2].push('他问了两回你说哪天回来。信上没写哪天。');
+    if (a >= 1) ev[3].push('他把你修的那把藤椅转了个方向，冲着院门。');
+    else ev[3].push('他把小板凳搬到院门口坐。');
+    ev[8].push('他走不到院门口了，让我把' + ((a >= 1 && cb > 8) ? '藤椅' : '板凳') + '给他搁在门里头，还是冲着门。');
+  }
+  if (a >= 1) {
+    if (L === '3') ev[cb].push('藤椅腿又断了。他不让扔，就搁在原地，他坐个小板凳挨着它。');
+    else if (L === '1') ev[cb].push('藤椅散了。他让我照你那样拿铁丝勒，我勒不紧，他还是坐上去了。');
+    else ev[cb].push('藤椅散了，收破烂的拿走了。他改坐门槛。');
+  } else if (L === '3') {
+    ev[1].push('你说椅子别扔，可那把藤椅本来就是散的。我没扔，搁在墙根。');
+  }
+  if (b >= 3) ev[4].push('下午他坐着不说话，我坐他旁边。他说你外孙也是这么坐的。');
+  if (b >= 2) ev[9].push('他下午还要出去坐，我扶他出去，再扶进来。');
+  else if (b === 1) ev[9].push('他下午不出屋了。');
+  if (c >= 1) {
+    ev[1].push('礼拜天打了视频，打通了，说了四分钟。');
+    if (L === '4') {
+      ev[3].push('她不光礼拜天打了，想起来就打。有一回半夜打过去，你没接。');
+      ev[6].push('她怕吵你，打通了就挂，让你看见有个没接的就行。');
+    }
+    if (c === 1) {
+      ev[5].push('她找不着那个绿的了，叫隔壁小孩帮着点。');
+      ev[10].push('屏上她看不清了，视频不打了，改成等你打过来她接。');
+    } else {
+      ev[5].push('她眼睛差了，数着第三排第二个按，照样打得通。');
+      if (c >= 3) ev[10].push('她看不清你的脸了，就把手机靠在暖壶上，听你说话。');
+      else ev[10].push('数格子也数错了，打到别人那儿去了两回。后来改成等你打过来。');
+    }
+  } else if (L === '4') {
+    ev[2].push('你说想你了就打视频，她不会弄。拿着手机问了隔壁小孩两回，后来就不问了。');
+  }
+  if (d >= 1) {
+    if (L === '2') {
+      ev[1].push('你分的药吃完了。她照着你那张字，自己往格子里分。');
+      ev[6].push('她分药要拿到窗户跟前，一粒一粒对着光看。');
+      if (e >= 2) ev[11].push('她分不清了，礼拜三让老冯念瓶子上的字。');
+      else ev[11].push('她分不清了，叫隔壁小孩念瓶子上的字。');
+    } else {
+      ev[1].push('你分的药吃完了。药盒空着，搁在电视上。');
+      ev[2].push('药还是从瓶子里倒着吃。有一天他吃了两回。');
+    }
+  } else if (L === '2') {
+    ev[1].push('你说药按格子吃，可家里没有药盒。她把你那张字压在药瓶底下。');
+  }
+  if (e >= 1) {
+    if (e === 1) ev[7].push('河边那条路远，她不走了，改去门口小卖部。');
+    else {
+      ev[7].push('走到桥头要歇两回了。老冯看见她，把鱼给她送过桥。');
+      if (e >= 3) ev[11].push('她去不了了。老冯礼拜三骑车把豆腐和鱼送到院门口，问外孙回来没有。');
+    }
+  }
+  if (L === '5') ev[12].push('你走那天没留话。她把你睡过的那床被子拆了洗了，又铺上。');
+  var lines = [];
+  for (var mm = 1; mm <= 12; mm++) {
+    lines.push([MON[mm], ev[mm].length ? ev[mm].slice(0, 2).join('') : BG[mm]]);
+  }
+  return lines;
+}
+
+function ending() {
+  var a = cnt('1'), b = cnt('2'), c = cnt('3'), L = st.letter;
+  var out = [];
+  out.push('你回来了，还是那个时候，院门外那棵槐树开着花。');
+  if (c >= 1) out.push('姥姥在院里，一眼认出你："比手机里黑。"');
+  else out.push('姥姥在院里，看了你一下，手里的盆搁下了。');
+  if (L === '1') {
+    out.push('姥爷坐在门里头，' + ((a >= 1 && chairBreak(a) > 8) ? '藤椅' : '小板凳') + '冲着院门。他看了你好一会儿，没认出来。');
+    out.push('然后他说："我外孙说他会回来。"');
+  } else {
+    out.push('姥爷在屋里。他看了你好一会儿，没认出来。姥姥说是你外孙，他点点头，问你吃了没有。');
+  }
+  if (b === 1) out.push('下午你搬了个小板凳，坐在他旁边。他跟你讲以前厂里的事，讲到一半，睡着了。');
+  else if (b >= 2) out.push('下午你搬了个小板凳，坐在他旁边，不说话。过了一会儿他说："我外孙也是这么坐的。"');
+  return out;
+}
+
+var OUT = document.getElementById('out');
+var CH = document.getElementById('choices');
+
+function para(t, cls) { var d = document.createElement('div'); d.className = 'p' + (cls ? ' ' + cls : ''); d.textContent = t; OUT.appendChild(d); return d; }
+
+function setChoices(map, fn) {
+  CH.innerHTML = '';
+  Object.keys(map).forEach(function (k) {
+    var bt = document.createElement('button');
+    bt.textContent = map[k];
+    bt.onclick = function () { fn(k); };
+    CH.appendChild(bt);
+  });
+}
+
+function showDay() {
+  para('第 ' + st.day + ' 天', 'head');
+  para(DAYHINT[st.day]);
+  setChoices(ACTS, pickDay);
+}
+
+function pickDay(k) {
+  st.picks.push(k);
+  para('你：' + ACTS[k], 'you');
+  para(reply(k));
+  st.day++;
+  if (st.day <= 5) showDay();
+  else {
+    para('走之前', 'head');
+    para('车是明天一早的。你在一张纸上给他们留一句话，压在暖壶底下。');
+    setChoices(LETTERS, pickLetter);
+  }
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+function pickLetter(k) {
+  st.letter = k;
+  CH.innerHTML = '';
+  para('你写：' + LETTERS[k], 'you');
+  para('你走了以后', 'head');
+  para('姥姥有个记账的本子，这一年每个月底下，她多写了一行。');
+  var bk = document.createElement('div'); bk.className = 'book';
+  year().forEach(function (r) {
+    var row = document.createElement('div');
+    var m = document.createElement('span'); m.className = 'm'; m.textContent = r[0];
+    var t = document.createElement('span'); t.textContent = r[1];
+    row.appendChild(m); row.appendChild(t); bk.appendChild(row);
+  });
+  OUT.appendChild(bk);
+  para('一年以后', 'head');
+  ending().forEach(function (t) { para(t); });
+  var ag = document.createElement('div'); ag.className = 'again';
+  var a = document.createElement('a'); a.textContent = '再来一回';
+  a.onclick = start;
+  ag.appendChild(a); OUT.appendChild(ag);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+function start() {
+  st = { day: 1, picks: [], letter: null };
+  OUT.innerHTML = '';
+  para('你是外孙。今年春天你回姥姥姥爷家住五天，五天以后要走。');
+  para('每天你挑一件事跟他们一起过。');
+  showDay();
+  window.scrollTo(0, 0);
+}
+
+start();
+</script>
+</body>
+</html>
